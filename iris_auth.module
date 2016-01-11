@@ -108,6 +108,13 @@ function iris_auth_init(){
     user_cookie_save(array('iris_userid' => (string)$user->uid));
     user_cookie_save(array('iris_token' => $token));
 
+    // Add socket.io
+    
+    $module_path = drupal_get_path("module", "iris_auth");
+    
+    drupal_add_js(variable_get("iris_server_address").'/socket.io/socket.io.js', 'external');
+    
+    drupal_add_js($module_path.'/js/iris_pair.js', 'external');
     
   }
   
