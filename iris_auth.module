@@ -1,0 +1,116 @@
+<?php
+
+// Forms for Iris settings
+
+//Administration
+function iris_auth_admin() {
+  $form = array();
+  $form['iris_server_address'] = array(
+    '#type' => 'textfield',
+    '#title' => t('URL of iris application'),
+    '#default_value' => variable_get('iris_server_address', "http://localhost:4000"),
+    '#size' => 256,
+    '#maxlength' => 256,
+    '#description' => t("Where the iris app is stored"),
+    '#required' => TRUE,
+  );
+  $form['iris_admin_username'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Iris admin username'),
+    '#default_value' => variable_get('iris_admin_username', ""),
+    '#size' => 256,
+    '#maxlength' => 256,
+    '#description' => t("Admin username for Iris server"),
+    '#required' => TRUE,
+  );
+   $form['iris_admin_password'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Iris admin password'),
+    '#default_value' => variable_get('iris_admin_password', ""),
+    '#size' => 256,
+    '#maxlength' => 256,
+    '#description' => t("Admin password for Iris server"),
+    '#required' => TRUE,
+  );
+
+  return system_settings_form($form);
+}
+
+function iris_auth_menu() {
+  $items = array();
+  $items['admin/config/iris/settings'] = array(
+    'title' => 'Iris settings',
+    'description' => 'Set auth settings for Iris',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('iris_auth_admin'),
+    'access arguments' => array('administer chat settings'),
+    'type' => MENU_NORMAL_ITEM,
+   );
+  return $items;
+}
+
+// Send an HTTP request with the username and password of an Iris user that has Make Access Token Permissions, get back admin credentials object
+
+function iris_auth_server_authenticate() {
+  
+  
+  $data = array(
+    'username' => variable_get("iris_admin_username"),
+    'password' => variable_get("iris_admin_password")
+  );
+  
+  //Send the admin authentication request to the Iris server
+  
+  $options = array(
+    'method' => 'POST',
+    'data' => drupal_http_build_query($data),
+    'timeout' => 15,
+    'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
+  );
+  
+    //Get a request back, validate it and set two cookies on the client to make JavaScript communication simpler.
+  
+  $result = drupal_http_request(variable_get("iris_server_address") . "/api/login", $options);
+  
+  return json_decode($result->data);
+  
+};
+
+function iris_auth_init(){
+  
+  global $user;
+  
+  $admin_creds = iris_auth_server_authenticate();
+  
+  if($admin_creds->userid){
+    
+    $data = array(
+    'credentials' => json_encode($admin_creds),
+    'userid' => json_encode((string)$user->uid)
+    );
+        
+  $options = array(
+    'method' => 'POST',
+    'data' => drupal_http_build_query($data),
+    'timeout' => 15,
+    'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
+  );
+    
+    $result = drupal_http_request(variable_get("iris_server_address") . "/auth/maketoken", $options);
+    
+    $token = json_decode($result->data)->response->id;
+  
+    user_cookie_delete('iris_server');
+    user_cookie_delete('iris_userid');
+    user_cookie_delete('iris_token');
+
+    user_cookie_save(array('iris_server' => variable_get("iris_server_address")));
+    user_cookie_save(array('iris_userid' => (string)$user->uid));
+    user_cookie_save(array('iris_token' => $token));
+
+    
+  }
+  
+}
+
+?>

@@ -1,0 +1,5 @@
+name = Iris Auth module
+description = Authenticates a user and admin with Iris via HTTP and websockets 
+core = 7.x
+package = Iris
+version = 7.x-1.0
