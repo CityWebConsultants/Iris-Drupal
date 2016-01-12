@@ -1,4 +1,4 @@
-// Read cookies
+// Function for reading cookies
 
 (function () {
   var cookies;
@@ -20,6 +20,7 @@
   }
 
   window.readCookie = readCookie;
+  
 })();
 
 var iris = {};
@@ -34,10 +35,22 @@ iris.credentials = {
 var socket = io(iris.url);
 
 socket.on("connect", function () {
-  socket.emit('pair', {
-    credentials: iris.credentials
-  });
+
+  if (iris.credentials.userid) {
+
+    socket.emit('pair', {
+      credentials: iris.credentials
+    });
+
+  } else {
+    
+    console.log("Anonymous connected with Iris")
+    
+  }
+
 });
+
+// Get authPass back from server if paired with a Iris session
 
 socket.on("pair", function (result) {
 
@@ -51,7 +64,7 @@ socket.on("pair", function (result) {
     }).done(function (data) {
 
       // Example call saving the authPass from Iris
-      
+
       iris.authPass = data;
 
     });

@@ -23,7 +23,7 @@ function iris_auth_admin() {
     '#description' => t("Admin username for Iris server"),
     '#required' => TRUE,
   );
-   $form['iris_admin_password'] = array(
+  $form['iris_admin_password'] = array(
     '#type' => 'textfield',
     '#title' => t('Iris admin password'),
     '#default_value' => variable_get('iris_admin_password', ""),
@@ -31,6 +31,15 @@ function iris_auth_admin() {
     '#maxlength' => 256,
     '#description' => t("Admin password for Iris server"),
     '#required' => TRUE,
+  );
+  $form['iris_userid_prefix'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Iris user id prefix'),
+    '#default_value' => variable_get('iris_userid_prefix', ""),
+    '#size' => 256,
+    '#maxlength' => 256,
+    '#description' => t("Optional prefix for Iris session userids so they don't clash with accounts on the Iris system itself. e.g. <em>drupal</em> would make an Iris session id for Drupal user 1 <em>drupal_1</em>"),
+    '#required' => FALSE,
   );
 
   return system_settings_form($form);
@@ -76,19 +85,20 @@ function iris_auth_server_authenticate() {
   
 };
 
-function iris_auth_init(){
+function iris_auth_user_login(){
   
   global $user;
-  
+    
   $admin_creds = iris_auth_server_authenticate();
   
-  if($admin_creds->userid){
+  if(isset($admin_creds) && $admin_creds->userid){
+    
     
     $data = array(
     'credentials' => json_encode($admin_creds),
-    'userid' => json_encode((string)$user->uid)
+    'userid' => json_encode(variable_get('iris_userid_prefix', "")."_".(string)$user->uid)
     );
-        
+            
   $options = array(
     'method' => 'POST',
     'data' => drupal_http_build_query($data),
@@ -97,27 +107,72 @@ function iris_auth_init(){
   );
     
     $result = drupal_http_request(variable_get("iris_server_address") . "/auth/maketoken", $options);
-    
+      
     $token = json_decode($result->data)->response->id;
-  
+      
     user_cookie_delete('iris_server');
     user_cookie_delete('iris_userid');
     user_cookie_delete('iris_token');
 
     user_cookie_save(array('iris_server' => variable_get("iris_server_address")));
-    user_cookie_save(array('iris_userid' => (string)$user->uid));
+    user_cookie_save(array('iris_userid' => variable_get('iris_userid_prefix', "")."_".(string)$user->uid));
     user_cookie_save(array('iris_token' => $token));
-
-    // Add socket.io
-    
-    $module_path = drupal_get_path("module", "iris_auth");
-    
-    drupal_add_js(variable_get("iris_server_address").'/socket.io/socket.io.js', 'external');
-    
-    drupal_add_js($module_path.'/js/iris_pair.js', 'external');
     
   }
   
+}
+
+function iris_auth_user_logout(){
+  
+    user_cookie_delete('iris_userid');
+    user_cookie_delete('iris_token');
+  
+    global $user;
+    
+  $admin_creds = iris_auth_server_authenticate();
+  
+  if(isset($admin_creds) && $admin_creds->userid){
+    
+    $data = array(
+    'credentials' => json_encode($admin_creds),
+    'userid' => json_encode(variable_get('iris_userid_prefix', "")."_".(string)$user->uid)
+    );
+    
+    $options = array(
+      'method' => 'POST',
+      'data' => drupal_http_build_query($data),
+      'timeout' => 15,
+      'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
+    );
+
+    $result = drupal_http_request(variable_get("iris_server_address") . "/auth/clearauth", $options);
+    
+  }
+  
+}
+
+function iris_auth_init(){
+  
+  global $base_path;
+  global $user;
+  
+  user_cookie_save(array('iris_server' => variable_get("iris_server_address")));
+  
+  if ($user->uid === 0) {
+    
+    user_cookie_delete('iris_userid');
+    user_cookie_delete('iris_token');
+
+  }
+  
+  // Add socket.io and core client side Iris js
+  
+  $module_path = drupal_get_path("module", "iris_auth");
+
+  drupal_add_js(variable_get("iris_server_address").'/socket.io/socket.io.js', 'external');
+
+  drupal_add_js($base_path . $module_path.'/js/iris_pair.js', 'external');
+
 }
 
 ?>
