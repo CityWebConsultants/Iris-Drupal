@@ -85,6 +85,37 @@ function iris_auth_server_authenticate() {
   
 };
 
+function iris_auth_uid_to_creds($uid){
+  
+  $admin_creds = iris_auth_server_authenticate();
+  
+  if(isset($admin_creds) && $admin_creds->userid){
+      
+    $data = array(
+      'credentials' => json_encode($admin_creds),
+      'userid' => json_encode(variable_get('iris_userid_prefix', "")."_".(string)$uid)
+    );
+
+    $options = array(
+      'method' => 'POST',
+      'data' => drupal_http_build_query($data),
+      'timeout' => 15,
+      'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
+    );
+
+      $result = drupal_http_request(variable_get("iris_server_address") . "/auth/maketoken", $options);
+
+      $token = json_decode($result->data)->response->id;
+    
+      return array(
+      "userid" => variable_get('iris_userid_prefix', "")."_".(string)$uid,
+      "token" => $token
+      );
+        
+  }
+  
+}
+
 function iris_auth_user_login(){
   
   global $user;
@@ -93,34 +124,15 @@ function iris_auth_user_login(){
   
   $admin_creds = iris_auth_server_authenticate();
     
-  if(isset($admin_creds) && $admin_creds->userid){
-    
-    
-    $data = array(
-    'credentials' => json_encode($admin_creds),
-    'userid' => json_encode(variable_get('iris_userid_prefix', "")."_".(string)$user->uid)
-    );
-            
-  $options = array(
-    'method' => 'POST',
-    'data' => drupal_http_build_query($data),
-    'timeout' => 15,
-    'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
-  );
-    
-    $result = drupal_http_request(variable_get("iris_server_address") . "/auth/maketoken", $options);
-      
-    $token = json_decode($result->data)->response->id;
-      
-    user_cookie_delete('iris_server');
-    user_cookie_delete('iris_userid');
-    user_cookie_delete('iris_token');
+  $user_creds = iris_auth_uid_to_creds($user->uid);
+  
+  user_cookie_delete('iris_server');
+  user_cookie_delete('iris_userid');
+  user_cookie_delete('iris_token');
 
-    user_cookie_save(array('iris_server' => variable_get("iris_server_address")));
-    user_cookie_save(array('iris_userid' => variable_get('iris_userid_prefix', "")."_".(string)$user->uid));
-    user_cookie_save(array('iris_token' => $token));
-            
-  }
+  user_cookie_save(array('iris_server' => variable_get("iris_server_address")));
+  user_cookie_save(array('iris_userid' => $user_creds['userid']));
+  user_cookie_save(array('iris_token' => $user_creds['token']));
   
 }
 
