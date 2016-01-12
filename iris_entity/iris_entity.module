@@ -1,7 +1,7 @@
 <?php
 
 function iris_entity_createEntity($entityType, $entityPropertiesArray, $credentials){
-  
+    
    $data = array(
     'credentials' => json_encode($credentials),
     );
@@ -22,3 +22,27 @@ function iris_entity_createEntity($entityType, $entityPropertiesArray, $credenti
   $result = drupal_http_request(variable_get("iris_server_address") . "/entity/create/".$entityType, $options);
       
 }
+
+function iris_entity_rules_action_info() {
+  return array(
+    'mail_user' => array(
+      'label' => t('Create an entity'), 
+      'group' => t('Iris'), 
+      'base' => "iris_entity_createEntity"
+    ),
+  );
+}
+
+//function iris_entity_createEntity_form(&$form, $settings) {
+//
+//  $form['parameter']['message'] = array(
+//    '#type' => 'textarea',
+//    '#title' => t('Message'),
+//    "#default_value" => json_encode(iris_auth_server_authenticate()),
+//    '#description' => t('The message that should be displayed.'),
+//  );
+//  $form['parameter']['error'] = array(
+//    '#type' => 'checkbox',
+//    '#title' => t('Display as error message'),
+//  );
+//}
