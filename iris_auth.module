@@ -88,9 +88,11 @@ function iris_auth_server_authenticate() {
 function iris_auth_user_login(){
   
   global $user;
-    
-  $admin_creds = iris_auth_server_authenticate();
   
+  // Returns admin credentials
+  
+  $admin_creds = iris_auth_server_authenticate();
+    
   if(isset($admin_creds) && $admin_creds->userid){
     
     
@@ -117,7 +119,7 @@ function iris_auth_user_login(){
     user_cookie_save(array('iris_server' => variable_get("iris_server_address")));
     user_cookie_save(array('iris_userid' => variable_get('iris_userid_prefix', "")."_".(string)$user->uid));
     user_cookie_save(array('iris_token' => $token));
-    
+            
   }
   
 }
@@ -130,7 +132,7 @@ function iris_auth_user_logout(){
     global $user;
     
   $admin_creds = iris_auth_server_authenticate();
-  
+    
   if(isset($admin_creds) && $admin_creds->userid){
     
     $data = array(

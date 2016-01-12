@@ -1,0 +1,6 @@
+name = Iris Entity module
+description = Create, edit and update entities in Iris 
+core = 7.x
+package = Iris
+version = 7.x-1.0
+dependencies[] = iris_auth
