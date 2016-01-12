@@ -33,16 +33,89 @@ function iris_entity_rules_action_info() {
   );
 }
 
-//function iris_entity_createEntity_form(&$form, $settings) {
-//
-//  $form['parameter']['message'] = array(
-//    '#type' => 'textarea',
-//    '#title' => t('Message'),
-//    "#default_value" => json_encode(iris_auth_server_authenticate()),
-//    '#description' => t('The message that should be displayed.'),
-//  );
-//  $form['parameter']['error'] = array(
-//    '#type' => 'checkbox',
-//    '#title' => t('Display as error message'),
-//  );
-//}
+function iris_entity_createEntity_form(&$form, $settings) {
+  
+  // Get list of entities
+  
+  $data = array(
+    'credentials' => json_encode(iris_auth_server_authenticate()),
+  );
+
+  $options = array(
+    'method' => 'GET',
+    'data' => drupal_http_build_query($data),
+    'timeout' => 15,
+    'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
+  );
+
+  $result = drupal_http_request(variable_get("iris_server_address") . "/api/entitySchema", $options);
+  
+  $entityTypes = array("Select");
+  
+  if(!empty($result->data)){
+    
+    $data = json_decode($result->data);
+    
+    $counter = 1;
+    
+    $skipFields = array("entityType","eid", "_id", "id");
+    
+    foreach($data as $key => $value){
+      
+      $entityTypes[] = $key;
+      
+      // Loop over fields and add them as a form item
+      
+      foreach($value as $fieldName => $fieldSettings){
+        
+        if($fieldSettings->fieldTypeName === "string"){
+          
+          $type = "textfield";
+          
+        } else if ($fieldSettings->fieldTypeName === "multistring") {
+          
+          $type = "textarea";
+          
+        } else {
+          
+          $type = "textfield";
+          
+        }
+        
+        if(!in_array($fieldName, $skipFields)){ 
+
+          $form['parameter'][$fieldName] = array(
+            '#type' => $type,
+            '#title' => t($fieldSettings->title),
+            '#weight' => 1,
+            "#required" => $fieldSettings->required,
+            '#description' => $fieldSettings->description,
+            '#states' => array(
+              'visible' => array(
+                ':input[name="entityType"]' => array('value' => $counter),
+              ),
+            )
+          );
+
+        }
+        
+      }
+      
+      $counter ++;
+     
+    }
+    
+    // Flip fields
+    
+    $form['parameter'] = array_reverse($form['parameter']);
+    
+  }
+  
+  $form['parameter']['entityType'] = array(
+    '#type' => 'select',
+    '#title' => t('Entity Type'),
+    '#weight' => 0,
+    '#options' => $entityTypes
+  );
+  
+}
