@@ -25,18 +25,18 @@ function iris_entity_createEntity($entityType, $entityPropertiesArray, $credenti
 
 function iris_entity_rules_action_info() {
   return array(
-    'mail_user' => array(
+    'create_entity' => array(
       'label' => t('Create an entity'), 
       'group' => t('Iris'), 
-      'base' => "iris_entity_createEntity"
+      'base' => "iris_entity_createEntity",
     ),
   );
 }
 
 function iris_entity_createEntity_form(&$form, $settings) {
-  
+            
   // Get list of entities
-  
+    
   $data = array(
     'credentials' => json_encode(iris_auth_server_authenticate()),
   );
@@ -51,7 +51,7 @@ function iris_entity_createEntity_form(&$form, $settings) {
   $result = drupal_http_request(variable_get("iris_server_address") . "/api/entitySchema", $options);
   
   $entityTypes = array("Select");
-  
+    
   if(!empty($result->data)){
     
     $data = json_decode($result->data);
@@ -61,13 +61,19 @@ function iris_entity_createEntity_form(&$form, $settings) {
     $skipFields = array("entityType","eid", "_id", "id");
     
     foreach($data as $key => $value){
-      
+            
       $entityTypes[] = $key;
-      
+            
       // Loop over fields and add them as a form item
-      
+            
       foreach($value as $fieldName => $fieldSettings){
         
+        if(!isset($fieldSettings->fieldTypeName)){
+          
+          continue;
+          
+        }
+                
         if($fieldSettings->fieldTypeName === "string"){
           
           $type = "textfield";
@@ -81,19 +87,22 @@ function iris_entity_createEntity_form(&$form, $settings) {
           $type = "textfield";
           
         }
-        
+                
         if(!in_array($fieldName, $skipFields)){ 
 
-          $form['parameter'][$fieldName] = array(
+          $form['settings'][$fieldName] = array(
             '#type' => $type,
             '#title' => t($fieldSettings->title),
             '#weight' => 1,
-            "#required" => $fieldSettings->required,
-            '#description' => $fieldSettings->description,
+//            "#required" => $fieldSettings->required,
+//            '#description' => $fieldSettings->description,
             '#states' => array(
               'visible' => array(
                 ':input[name="entityType"]' => array('value' => $counter),
               ),
+              'required' => array(
+                'input[name="entityType"]' => array('value' => $counter),
+              )
             )
           );
 
@@ -107,11 +116,17 @@ function iris_entity_createEntity_form(&$form, $settings) {
     
     // Flip fields
     
-    $form['parameter'] = array_reverse($form['parameter']);
+    $form['settings'] = array_reverse($form['settings']);
+    
+    $form['actions'] = array('#type' => 'actions');
+    $form['actions']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save'),
+    );
     
   }
   
-  $form['parameter']['entityType'] = array(
+  $form['settings']['entityType'] = array(
     '#type' => 'select',
     '#title' => t('Entity Type'),
     '#weight' => 0,
