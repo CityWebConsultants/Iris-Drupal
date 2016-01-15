@@ -20,6 +20,8 @@ function iris_entity_createEntity($entityType, $entityPropertiesArray, $credenti
   );
   
   $result = drupal_http_request(variable_get("iris_server_address") . "/entity/create/".$entityType, $options);
+  
+  watchdog("rules", "Iris " . $entityType . ": " . $result->data);
       
 }
 
@@ -57,8 +59,10 @@ function iris_entity_rules_action_info() {
       $current = array(
           'label' => t('Create a '.$key.' entity'), 
           'group' => t('Iris'), 
-          'base' => "iris_entity_createEntity_".$key,
-          'parameter' => array()
+          'base' => "iris_entity_createEntity_rules",
+          'parameter' => array(),
+          'named parameter' => true,
+          'settings' => "hello",
       );
             
       // Loop over fields and add them as a form item
@@ -92,15 +96,33 @@ function iris_entity_rules_action_info() {
         if(!in_array($fieldName, $skipFields)){ 
 
           $current['parameter'][$fieldName] = array(
-                  'type' => 'text',
+                  'type' => $type,
                   'label' => t($fieldName),
                   );
+          
           }
         
       }
       
-//      var_dump($current);
-           
+      // Add field for user id for which to perform this action
+      
+      $current['parameter']["userid"] = array(
+                  'type' => 'text',
+                  'label' => 'User id',
+                  'optional' => true,
+                  'description' => "Iris user id to use to perform this action.  Leave blank to use the Iris root account."
+                  );
+      
+      // Add entityType field. This should be hidden but I can't work out how at present.
+      
+      $current['parameter']["entityType"] = array(
+                  'type' => 'text',
+                  'label' => 'entity type',
+                  'description' => "Don't edit this field",
+                  'default value' => $key
+                  );
+      
+                 
       $actions['create_iris_entity_'.$key] = $current;
     
     }
@@ -110,4 +132,35 @@ function iris_entity_rules_action_info() {
     
   return $actions;
 
+}
+
+function iris_entity_createEntity_rules($settings){
+
+  $entityType = $settings['entityType'];
+  $user = $settings["userid"];
+  
+  unset($settings['userid']);
+  unset($settings['entityType']);
+  
+  unset($settings["settings"]);
+  unset($settings["state"]);
+  
+  // Grab credentials object for user
+  
+  // First check if root
+
+  $creds = array();
+  
+  if(!isset($user)){
+    
+    $creds = iris_auth_server_authenticate();
+    
+  } else {
+    
+    $creds = iris_auth_uid_to_creds($user);
+    
+  }
+  
+  iris_entity_createEntity($entityType, $settings, $creds);
+    
 }
