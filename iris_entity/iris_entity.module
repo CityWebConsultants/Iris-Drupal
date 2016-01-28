@@ -69,21 +69,21 @@ function iris_entity_rules_action_info() {
             
       foreach($value as $fieldName => $fieldSettings){
         
-        if(!isset($fieldSettings->fieldTypeName)){
+        if(!isset($fieldSettings->readableType)){
           
           continue;
           
         }
                 
-        if($fieldSettings->fieldTypeName === "string"){
+        if($fieldSettings->readableType === "String"){
           
           $type = "text";
           
-        } else if ($fieldSettings->fieldTypeName === "multistring") {
+        } else if ($fieldSettings->readableType === "[String]") {
           
           $type = "list<text>";
           
-        } else if ($fieldSettings->fieldTypeName === "boolean") {
+        } else if ($fieldSettings->readableType === "Boolean") {
           
           $type = "text";
           
