@@ -44,7 +44,7 @@ socket.on("connect", function () {
 
   } else {
     
-    console.log("Anonymous connected with Iris")
+    console.info("Anonymous connected with Iris")
     
   }
 
@@ -69,7 +69,7 @@ socket.on("pair", function (result) {
 
     });
 
-    console.log("Paired with Iris");
+    console.info("Paired with Iris");
 
   }
 
