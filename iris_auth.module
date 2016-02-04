@@ -93,7 +93,7 @@ function iris_auth_uid_to_creds($uid){
       
     $data = array(
       'credentials' => json_encode($admin_creds),
-      'userid' => json_encode(variable_get('iris_userid_prefix', "")."_".(string)$uid)
+      'userid' => json_encode(variable_get('iris_userid_prefix', "").(string)$uid)
     );
 
     $options = array(
@@ -108,7 +108,7 @@ function iris_auth_uid_to_creds($uid){
       $token = json_decode($result->data)->response->id;
     
       return array(
-      "userid" => variable_get('iris_userid_prefix', "")."_".(string)$uid,
+      "userid" => variable_get('iris_userid_prefix', "").(string)$uid,
       "token" => $token
       );
         
@@ -149,7 +149,7 @@ function iris_auth_user_logout(){
     
     $data = array(
     'credentials' => json_encode($admin_creds),
-    'userid' => json_encode(variable_get('iris_userid_prefix', "")."_".(string)$user->uid)
+    'userid' => json_encode(variable_get('iris_userid_prefix', "").(string)$user->uid)
     );
     
     $options = array(
