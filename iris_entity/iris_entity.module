@@ -21,9 +21,46 @@ function iris_entity_createEntity($entityType, $entityPropertiesArray, $credenti
   
   $result = drupal_http_request(variable_get("iris_server_address") . "/entity/create/".$entityType, $options);
   
-  watchdog("rules", "Iris " . $entityType . ": " . $result->data);
+  watchdog("iris", "Iris " . $entityType . ": " . $result->data);
       
 }
+
+function iris_entity_fetchEntity($entityType, $queryList, $credentials){
+    
+   $request = array(
+    'credentials' => json_encode($credentials),
+    'queryList' => array()
+    );
+    
+  $query = array(
+    "entities" => array($entityType), 
+    "queries" => array()
+  );
+  
+  foreach($queryList as $currentQuery){
+    $query["queries"][] = array(
+      "field" => $currentQuery[0],
+      "operator" => $currentQuery[1],
+      "value" => $currentQuery[2]
+    );
+  };
+  
+  $request["queryList"][] = $query;
+    
+  $options = array(
+    'method' => 'GET',
+    'data' => drupal_http_build_query($request),
+    'timeout' => 15,
+    'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
+  );
+  
+  $result = drupal_http_request(variable_get("iris_server_address") . "/fetch/", $options);
+  
+  watchdog("iris", "Iris " . $entityType . ": " . $result->data);
+      
+}
+
+
 
 function iris_entity_rules_action_info() {
   
@@ -82,6 +119,10 @@ function iris_entity_rules_action_info() {
         } else if ($fieldSettings->readableType === "[String]") {
           
           $type = "list<text>";
+          
+        } else if ($fieldSettings->readableType === "[Number]") {
+          
+          $type = "list<integer>";
           
         } else if ($fieldSettings->readableType === "Boolean") {
           
