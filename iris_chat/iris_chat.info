@@ -1,0 +1,5 @@
+name = Iris chat
+description = "A chat room powered by Iris"
+core = 7.x
+
+

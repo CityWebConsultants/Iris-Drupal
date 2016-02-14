@@ -1,0 +1,5 @@
+name = Iris OG Integration
+description = "Adding/updating groups and memberships"
+core = 7.x
+
+

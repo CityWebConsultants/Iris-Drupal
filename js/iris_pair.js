@@ -20,12 +20,13 @@
   }
 
   window.readCookie = readCookie;
-  
+
 })();
 
 var iris = {};
 
 iris.url = decodeURIComponent(readCookie("Drupal.visitor.iris_server"));
+iris.server = iris.url;
 
 iris.credentials = {
   "userid": readCookie("Drupal.visitor.iris_userid"),
@@ -38,14 +39,12 @@ socket.on("connect", function () {
 
   if (iris.credentials.userid) {
 
-    socket.emit('pair', {
-      credentials: iris.credentials
-    });
+    socket.emit('pair', iris.credentials );
 
   } else {
-    
+
     console.info("Anonymous connected with Iris")
-    
+
   }
 
 });
@@ -60,17 +59,21 @@ socket.on("pair", function (result) {
       url: iris.url + "/auth/checkauth",
       data: {
         credentials: iris.credentials
+      },
+      success: function (data, status) {
+        iris.authPass = data;
+        //iris.initialise();
+      },
+      error: function (jqXHR, status, errorThrown) {
+        //iris.reauthenticate();
+        var p = 3;
       }
-    }).done(function (data) {
-
-      // Example call saving the authPass from Iris
-
-      iris.authPass = data;
-
     });
 
     console.info("Paired with Iris");
 
+  } else {
+    //iris.reauthenticate();
   }
 
-})
+});

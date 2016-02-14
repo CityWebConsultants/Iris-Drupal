@@ -55,7 +55,41 @@ function iris_auth_menu() {
     'access arguments' => array('administer chat settings'),
     'type' => MENU_NORMAL_ITEM,
    );
+  $items['iris/reauthenticate'] = array(
+    'title' => 'Iris reauthenticate',
+    'page callback' => 'iris_auth_reauthenticate_json',
+    'access callback' => TRUE,
+    'type' => MENU_NORMAL_ITEM,
+   );
   return $items;
+}
+
+function iris_auth_reauthenticate_json() {
+   
+  global $user;
+  $returns = array();
+  
+  if ($user->uid) {
+    $result = iris_auth_uid_to_creds($user->uid);
+
+    if ($result) {
+      
+        //$returns['peerserver'] = variable_get("hub_chat_peerserver");
+        //$returns['peerport'] = variable_get("hub_chat_peerport");
+        $returns['server'] = variable_get("iris_server_address");
+        $returns['token'] = $result['token'];
+        $returns['userid'] = $result['userid'];
+        $returns['success'] = TRUE;
+
+    }
+    else {
+      $returns['success'] = FALSE;
+    }
+    return drupal_json_output(json_encode($returns));
+  }
+  else {
+    return drupal_access_denied();
+  }
 }
 
 // Send an HTTP request with the username and password of an Iris user that has Make Access Token Permissions, get back admin credentials object
@@ -93,7 +127,7 @@ function iris_auth_uid_to_creds($uid){
       
     $data = array(
       'credentials' => json_encode($admin_creds),
-      'userid' => json_encode(variable_get('iris_userid_prefix', "").(string)$uid)
+      'userid' => json_encode(variable_get('iris_userid_prefix', "") . (string)$uid)
     );
 
     $options = array(
@@ -108,8 +142,8 @@ function iris_auth_uid_to_creds($uid){
       $token = json_decode($result->data)->response->id;
     
       return array(
-      "userid" => variable_get('iris_userid_prefix', "").(string)$uid,
-      "token" => $token
+        "userid" => variable_get('iris_userid_prefix', "").(string)$uid,
+        "token" => $token
       );
         
   }
@@ -129,10 +163,12 @@ function iris_auth_user_login(){
   user_cookie_delete('iris_server');
   user_cookie_delete('iris_userid');
   user_cookie_delete('iris_token');
+  user_cookie_delete('iris_drupal_uid');
 
   user_cookie_save(array('iris_server' => variable_get("iris_server_address")));
   user_cookie_save(array('iris_userid' => $user_creds['userid']));
   user_cookie_save(array('iris_token' => $user_creds['token']));
+  user_cookie_save(array('iris_drupal_uid' => $user->uid));
   
 }
 
@@ -140,6 +176,7 @@ function iris_auth_user_logout(){
   
     user_cookie_delete('iris_userid');
     user_cookie_delete('iris_token');
+    user_cookie_delete('iris_drupal_uid');
   
     global $user;
     
@@ -184,7 +221,7 @@ function iris_auth_init(){
   $module_path = drupal_get_path("module", "iris_auth");
 
   drupal_add_js(variable_get("iris_server_address").'/socket.io/socket.io.js', 'external');
-
+  drupal_add_library('system', 'jquery.cookie');
   drupal_add_js($base_path . $module_path.'/js/iris_pair.js', 'external');
 
 }

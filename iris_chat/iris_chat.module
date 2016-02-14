@@ -1,0 +1,59 @@
+<?php
+
+/**
+ * Create block to load the clientside JavaScript that liases with the chat server via websockets.
+ */
+function iris_chat_block_info() {
+  $blocks = array();
+  $blocks['chat_window'] = array(
+    'info' => t('Chat window'),
+  );
+  return $blocks;
+}
+
+function iris_chat_block_view($delta = '') {
+  
+//  iris_entity_fetchEntity("page",array(array("title", "contains", "hello")), iris_auth_server_authenticate());
+
+//  iris_entity_updateEntity("message", "38", array("content" => "hola"), iris_auth_server_authenticate());
+  
+//  iris_entity_deleteEntity("message", "38", iris_auth_server_authenticate());
+  
+  $block = array();
+  
+  switch ($delta) {
+    case 'chat_window':		  
+      $block['content'] = theme("chat_window");
+    break;
+  }
+  return $block;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function iris_chat_theme($existing, $type, $theme, $path) {
+
+  return array(
+    'chat_window' => array(
+      'template' => 'chat-window'
+    )
+  );
+
+}
+
+function iris_chat_init() {
+ 
+  drupal_add_js("https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0-rc.0/angular.min.js", 'external');
+  drupal_add_js("https://cdn.socket.io/socket.io-1.4.5.js", 'external');
+  drupal_add_js(variable_get("iris_server_address") . '/modules/angular_live_load/angular_live_load_client.js', 'external');
+  drupal_add_js(variable_get("iris_server_address") . "/modules/entity/templates.js", 'external');
+  drupal_add_js('/' . drupal_get_path('module', 'iris_chat') . '/js/iris_chat.helpers.js', 'external');
+  drupal_add_js('/' . drupal_get_path('module', 'iris_chat') . '/js/iris_chat.events.js', 'external');
+  drupal_add_js('/' . drupal_get_path('module', 'iris_chat') . '/js/iris_chat.theme.js', 'external');
+  drupal_add_js('/' . drupal_get_path('module', 'iris_chat') . '/js/iris_chat.js', 'external');
+  drupal_add_css('/' . drupal_get_path('module', 'iris_chat') . '/css/chat.css', 'external');
+  
+  
+
+}

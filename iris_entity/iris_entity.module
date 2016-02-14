@@ -27,26 +27,28 @@ function iris_entity_createEntity($entityType, $entityPropertiesArray, $credenti
 
 function iris_entity_fetchEntity($entityType, $queryList, $credentials){
     
-   $request = array(
-    'credentials' => json_encode($credentials),
-    'queryList' => array()
-    );
     
   $query = array(
     "entities" => array($entityType), 
     "queries" => array()
   );
   
-  foreach($queryList as $currentQuery){
     $query["queries"][] = array(
-      "field" => $currentQuery[0],
-      "operator" => $currentQuery[1],
-      "value" => $currentQuery[2]
+      "field" => $queryList[0],
+      "operator" => $queryList[1],
+      "value" => $queryList[2]
     );
-  };
-  
-  $request["queryList"][] = $query;
-    
+
+   $request = array(
+    'credentials' => json_encode($credentials),
+     "entities" => json_encode(array($entityType)), 
+     "queries" => json_encode(array(array(
+       "field" => $queryList[0],
+       "operator" => $queryList[1],
+       "value" => $queryList[2]
+     )))
+    );
+ 
   $options = array(
     'method' => 'GET',
     'data' => drupal_http_build_query($request),
@@ -58,6 +60,7 @@ function iris_entity_fetchEntity($entityType, $queryList, $credentials){
   
   watchdog("iris", "Iris " . $entityType . ": " . $result->data);
       
+  return $result;
 }
 
 
