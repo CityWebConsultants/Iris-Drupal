@@ -1,28 +1,37 @@
 <html>
-
-<head>
+  <head>
 <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0-rc.0/angular.min.js"></script>
-  <script src="http://localhost:4001/modules/entity/templates.js"></script>
-  <script src="http://localhost:4001/modules/angular_live_load/angular_live_load_client.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0-rc.0/angular.min.js"></script>
+<script src="http://localhost:4001/modules/entity/templates.js"></script>
+<script src="http://localhost:4001/modules/angular_live_load/angular_live_load_client.js"></script>
 
-</head>
+<script>
+  iris.server = "http://localhost:4001";
 
-<body>
-
-  hello world
-  
-  <script>
-    
-    iris.server = "http://localhost:4001";
-    
   iris.fetchEntities("groups", {
-        entities: ["group"],
-        queries: [],
 
-      });
-  </script>
+    entities: ["group"]
+    /*queries: [{
+      "field": "username",
+      operator: "is",
+      value: "Filip"
+    }],
+    sort: {
+      "username": "asc"
+    },*/
+  })
 
-</body>
+</script>
+  </head>
+  <body>
 
+<div ng-controller="iris-template" ng-iris-template="groups">
+
+  <ul>
+    <li ng-repeat="group in groups">{{group.name}} {{group.eid}}</li>
+
+  </ul>
+
+</div>
+  </body>
 </html>

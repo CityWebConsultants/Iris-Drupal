@@ -4,6 +4,15 @@
 
     // View a group's messages
 
+    document.addEventListener('entityListUpdate', function (e) {
+            
+      if (iris.currentGroup) {
+        $('.message-window ul')[0].scrollTop = $('.message-window ul')[0].scrollHeight;
+      }
+
+    }, false);
+    
+    
     $("body").on("click", "#grouplist .group", function (e) {
 
       var groupid = jQuery(this).data("group");
@@ -17,11 +26,25 @@
           "operator": "includes",
           "value": groupid
         }],
-        sort : {field_created: 'desc'}
+        sort : {field_created: 'asc'}
+
+      });
+      
+      iris.fetchEntities("members", {
+        entities: ["group"],
+        queries: [{
+          "field": "eid",
+          "operator": "IS",
+          "value": groupid
+        }]
 
       });
 
     });
+    
+     $("body").on("click", ".members-view, #message-count", function (e) {
+       $(this).parent().toggleClass('closed');
+     });
 
     // Post a message
 

@@ -127,34 +127,6 @@
 
     }
 
-    iris.reauthenticate = function () {
-
-      $.get("/iris/reauthenticate", function (data) {
-        data = JSON.parse(data);
-
-        if (data.success) {
-
-          $.cookie('Drupal.visitor.iris_token', data.token);
-          $.cookie('Drupal.visitor.iris_userid', data.userid);
-          $.cookie('Drupal.visitor.iris_server', data.server);
-          //$.cookie('Drupal.visitor.peerserver', data.peerserver);
-          //$.cookie('Drupal.visitor.peerport', data.peerport);
-          iris.credentials = {
-            'token': data.token,
-            'userid': data.userid
-          };
-
-          socket.emit('pair', iris.credentials);
-
-        } else {
-
-          console.error("Authentication failed");
-
-        }
-      }, "json");
-
-    };
-
     iris.togglesearch = function () {
 
       jQuery("#chat-search-results").html("");

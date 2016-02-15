@@ -2,7 +2,8 @@
   border:1px solid #aaa;
 }
 #conversation {
-  height: 300px;
+  height: 260px;
+  margin-top:40px;
 }
 .conversation-inner, .message-window {
   height:100%;
@@ -129,6 +130,15 @@ li.group:hover {
   background-color: #ddd
 }
 
+.members-view {
+  float:right;
+}
+
+#member-count {
+  float:right;
+  padding-right:5px;
+}
+
 #chat-panel {
   border-left: 20px solid #aaa;
   width: 66.7%;
@@ -138,11 +148,16 @@ li.group:hover {
   vertical-align: top;
 }
 
-.group-actions {
-  margin-top: 0;
+#conversation-wrapper ul.group-actions {
+  margin: 0;
   padding-left: 0;
   list-style: none;
   overflow: hidden;
+}
+
+.message-window ul {
+  height:calc(100% - 50px);
+  overflow-y:auto;
 }
 
 .group-action {
@@ -243,6 +258,9 @@ li.group:hover {
   cursor: pointer;
 }
 
+#group-header {
+  position:relative;
+}
 #member-count .glyphicon {
   margin-left: 5px;
   margin-right: 5px;
@@ -250,9 +268,24 @@ li.group:hover {
 
 .member-count-surround {
   background: #eee;
-  padding: 5px;
   margin-bottom: 10px;
   border-radius: 3px;
+  position:absolute;
+  width:100%;
+  z-index:2;
+}
+
+.member-count-surround > div {
+  padding:7px;
+  overflow:hidden;
+}
+
+.member-count-surround > div.closed ul {
+  display:none;
+}
+
+#group-header .member-count-surround ul {
+  margin:0;
 }
 
 #group-members {
@@ -474,10 +507,6 @@ section.chat-window #fileupload {
   background: #eee;
   border-radius: 3px;
   padding: 5px;
-  margin-bottom: 5px;
-}
-
-section.chat-window .group-actions {
   margin-bottom: 5px;
 }
 

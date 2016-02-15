@@ -1,4 +1,3 @@
-
 <!-- Latest compiled and minified CSS -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
 
@@ -112,12 +111,13 @@
 
               <input id="chat-search-field" />
 
-              <ul> <!--id="chat-search-results"-->
+              <ul>
+                <!--id="chat-search-results"-->
 
                 <li data-userid="{{user.field_drupal_uid}}" ng-bind-html="userSearchItem(user)" class="user" ng-repeat="user in drupal_user" ng-if="user.field_drupal_uid != credentials.userid"></li>
 
               </ul>
-<!--<div ng-include="'/<?php print drupal_get_path('module', 'iris_chat');?>/templates/user-search.html'"></div>-->
+              <!--<div ng-include="'/<?php print drupal_get_path('module', 'iris_chat');?>/templates/user-search.html'"></div>-->
             </div>
           </form>
 
@@ -126,15 +126,9 @@
         <div id='groupbar' class="lookup-col-container open">
           <div ng-controller="iris-template" ng-iris-template="groups">
             <ul id='grouplist' class="lookup-col">
-              
-              <li class="group" data-group="{{group.eid}}" ng-bind-html="recentGroupItem(group)" class="group" ng-repeat="group in groups" ></li>
-              
-              
-              <!--<li ng-repeat="group in groups" class="group" data-group="{{group.eid}}" class="open-group" title="{{group.name}}">
-                <span class="image-container online-surround "><img src="/sites/all/themes/hub/img/hub-picture-default.png">  </span>
-                <span>{{group.name}}</span>
-                <span class="unread"></span>
-              </li>-->
+
+              <li class="group" data-group="{{group.eid}}" ng-bind-html="recentGroupItem(group)" class="group" ng-repeat="group in groups"></li>
+
             </ul>
           </div>
         </div>
@@ -155,8 +149,17 @@
           <div id='group-header'>
             <h2><?php print t('Chat...'); ?></h2>
             <div class="member-count-surround">
-              <span id='member-count'></span>
-              <ul id='group-members' style="display: none"></ul>
+              
+              <div class="closed" ng-controller="iris-template" ng-iris-template="members">
+                <span class="members-view glyphicon glyphicon-user"></span><span id='member-count'>{{members[0].field_users.length}}</span>
+                <ul>
+                <li ng-repeat="member in members[0].field_users" ng-bind-html="listMembersDisplay(member)">
+
+                    {{member.field_uid}}
+
+                </li>
+                </ul>
+              </div>
             </div>
             <div class="meeting-window-surround window-surround" style="display: none;">
               <h3>Meeting</h3>
@@ -166,17 +169,6 @@
           <div id='conversation' data-groupid>
 
             <div class="conversation-inner" ng-controller="iris-template" ng-iris-template="messages">
-
-
-              <div ng-repeat="group in groups">
-
-                <div ng-if="$parent.$parent.$parent.currentGroup == group.eid">
-
-                  <b>Members:</b>
-
-                </div>
-
-              </div>
 
               <div class="message-window" ng-if="messages">
 

@@ -197,6 +197,14 @@ Drupal.theme.prototype.GroupListItem = function (group, $scope) {
   return html;
 };
 
+Drupal.theme.prototype.listMembersDisplay = function(member, $scope) {
+  for (var i = 0; i < iris.fetched.drupal_user.entities.length; i++) {
+    if (iris.fetched.drupal_user.entities[i].field_drupal_uid == member.field_uid) {
+      return iris.fetched.drupal_user.entities[i].field_username;
+    }
+  } 
+}
+
 Drupal.theme.prototype.UserSearchItem = function (user, $scope) {
   var html = '';
   var onlineclasses = 'online-surround';

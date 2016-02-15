@@ -65,7 +65,7 @@ socket.on("pair", function (result) {
         //iris.initialise();
       },
       error: function (jqXHR, status, errorThrown) {
-        //iris.reauthenticate();
+        iris.reauthenticate();
         var p = 3;
       }
     });
@@ -73,7 +73,35 @@ socket.on("pair", function (result) {
     console.info("Paired with Iris");
 
   } else {
-    //iris.reauthenticate();
+    iris.reauthenticate();
   }
 
 });
+
+ iris.reauthenticate = function () {
+
+      jQuery.get("/iris/reauthenticate", function (data) {
+        data = JSON.parse(data);
+
+        if (data.success) {
+
+          jQuery.cookie('Drupal.visitor.iris_token', data.token);
+          jQuery.cookie('Drupal.visitor.iris_userid', data.userid);
+          jQuery.cookie('Drupal.visitor.iris_server', data.server);
+          //$.cookie('Drupal.visitor.peerserver', data.peerserver);
+          //$.cookie('Drupal.visitor.peerport', data.peerport);
+          iris.credentials = {
+            'token': data.token,
+            'userid': data.userid
+          };
+
+          socket.emit('pair', iris.credentials);
+
+        } else {
+
+          console.error("Authentication failed");
+
+        }
+      }, "json");
+
+    };

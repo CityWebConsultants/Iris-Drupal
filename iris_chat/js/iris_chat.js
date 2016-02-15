@@ -13,6 +13,9 @@
         return $sce.trustAsHtml(Drupal.theme.prototype.GroupListItem(group, $scope));
       }
 
+      $scope.listMembersDisplay = function (member) {
+        return $sce.trustAsHtml(Drupal.theme.prototype.listMembersDisplay(member, $scope));
+      }
 
       iris.server = decodeURIComponent(readCookie("Drupal.visitor.iris_server"));
       iris.currentGroup = null;
