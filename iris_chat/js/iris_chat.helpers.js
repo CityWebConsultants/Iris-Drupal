@@ -2,7 +2,11 @@
 
   $(document).ready(function () {
 
+    iris.unread = 0;
+    
     iris.initialise = function () {
+      
+      iris.unread = 0;
       // Get all groups for current user.
       iris.fetchEntities("groups", {
         entities: ["group"],

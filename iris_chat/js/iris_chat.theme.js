@@ -186,9 +186,9 @@ Drupal.theme.prototype.GroupListItem = function (group, $scope) {
   html += '    <img src="' + group.field_avatar + '">';
   html += '  </span>';
   html += '  <span>' + name + '</span> <span class="unread">';
-  /* if (group.unread && group.unread > 0) {
-     html += group.unread;
-   }*/
+  if (group.unread && group.unread > 0) {
+    html += group.unread;
+  }
   html += '</span>';
   /*if (group.reftype === 'event') {
     html += '<span class="event-start" data-starttime="' + group.starttime + '" data-endtime="' + group.endtime + '">(' + Drupal.theme.prototype.MeetingTime(group.starttime * 1000, group.endtime * 1000) + ')</span>';

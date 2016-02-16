@@ -62,11 +62,9 @@ socket.on("pair", function (result) {
       },
       success: function (data, status) {
         iris.authPass = data;
-        //iris.initialise();
       },
       error: function (jqXHR, status, errorThrown) {
         iris.reauthenticate();
-        var p = 3;
       }
     });
 
@@ -74,6 +72,7 @@ socket.on("pair", function (result) {
 
   } else {
     iris.reauthenticate();
+    iris.initialise();
   }
 
 });

@@ -5,14 +5,34 @@
     // View a group's messages
 
     document.addEventListener('entityListUpdate', function (e) {
-            
-      if (iris.currentGroup) {
+
+      if (e.detail.entities.message) {
         $('.message-window ul')[0].scrollTop = $('.message-window ul')[0].scrollHeight;
+      } else if (e.detail.entities.group) {
+        e.detail.entities.group.forEach(function (group, index) {
+          var current = iris.unread;
+          iris.unread += group.unread;
+
+          if (current === 0 && iris.unread > 0) {
+
+            document.title = "(" + iris.unread + ")" + " " + document.title;
+
+          } else if (current > 0 && iris.unread === 0) {
+
+            document.title = document.title.replace("(" + current + ")" + " ", "");
+
+          } else {
+
+            document.title = document.title.replace("(" + current + ")" + " ", "(" + iris.unread + ")" + " ");
+
+          }
+        });
       }
 
+
     }, false);
-    
-    
+
+
     $("body").on("click", "#grouplist .group", function (e) {
 
       var groupid = jQuery(this).data("group");
@@ -26,10 +46,12 @@
           "operator": "includes",
           "value": groupid
         }],
-        sort : {field_created: 'asc'}
+        sort: {
+          field_created: 'asc'
+        }
 
       });
-      
+
       iris.fetchEntities("members", {
         entities: ["group"],
         queries: [{
@@ -41,10 +63,10 @@
       });
 
     });
-    
-     $("body").on("click", ".members-view, #message-count", function (e) {
-       $(this).parent().toggleClass('closed');
-     });
+
+    $("body").on("click", ".members-view, #message-count", function (e) {
+      $(this).parent().toggleClass('closed');
+    });
 
     // Post a message
 
@@ -110,7 +132,7 @@
 
       var entity = {
         name: iris.generateGroupName([current_uid, selected_uid]),
-        field_121 : true,
+        field_121: true,
         field_users: [{
           field_uid: current_uid
                     }, {
@@ -149,9 +171,11 @@
 
         } else {
           // Create new multi-user group.
-          
+
           var users = JSON.parse(JSON.stringify(iris.fetchedEntities.group[iris.currentGroup].field_users));
-          users.push({field_uid : selected_uid});
+          users.push({
+            field_uid: selected_uid
+          });
           var name = iris.generateGroupName(iris.getGroupUserIds(users));
           var entity = {
             name: name,
