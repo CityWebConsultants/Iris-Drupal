@@ -34,9 +34,9 @@
 
       });
 
-      iris.fetchEntities("drupal_user", {
+      iris.fetchEntities("users", {
 
-        entities: ["drupal_user"]
+        entities: ["user"]
 
       });
 

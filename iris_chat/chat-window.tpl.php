@@ -9,7 +9,7 @@
 
 <div ng-controller="iris-template" ng-iris-template="users">
 
-  {{drupal_user[1].field_username}}
+  {{users[1].field_username}}
 
 </div>
 
@@ -107,14 +107,14 @@
           <form id="chat-search">
             <label>Search for users</label>
 
-            <div ng-controller="iris-template" ng-iris-template="drupal_user">
+            <div ng-controller="iris-template" ng-iris-template="users">
 
               <input id="chat-search-field" />
 
               <ul>
                 <!--id="chat-search-results"-->
 
-                <li data-userid="{{user.field_drupal_uid}}" ng-bind-html="userSearchItem(user)" class="user" ng-repeat="user in drupal_user" ng-if="user.field_drupal_uid != credentials.userid"></li>
+                <li data-userid="{{user.field_external_id}}" ng-bind-html="userSearchItem(user)" class="user" ng-repeat="user in users" ng-if="user.field_external_id != credentials.userid"></li>
 
               </ul>
               <!--<div ng-include="'/<?php print drupal_get_path('module', 'iris_chat');?>/templates/user-search.html'"></div>-->

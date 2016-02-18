@@ -106,22 +106,8 @@ Drupal.theme.prototype.GroupListItem = function (group, $scope) {
   var userid = '';
   var online = '';
 
-  // Check 121 and add relevant data attributes
-  if (group.field_121) {
-    group.field_users.forEach(function (element) {
-      /*if (element.userid != chat.user.id) {
-
-        if (jQuery.inArray(element.field_uid, chat.onlineusers) !== -1) {
-
-          online = "online";
-
-        }
-
-        userid = ' data-userid="' + element.userid + '"';
-      }*/
-    });
-    grouptype = '1to1';
-    classes.push('1to1');
+  if (group.online && Object.keys(group.online).length > 0) {
+    online = 'online';
   }
 
   // Check readonly
@@ -164,10 +150,10 @@ Drupal.theme.prototype.GroupListItem = function (group, $scope) {
   if (group.name.indexOf('|user:') === 0) {
     jQuery.each(group.field_users, function (index, group_user) {
       if (iris.credentials.userid != group_user.field_uid) {
-        if (iris.fetchedEntities.drupal_user) {
-          jQuery.each(iris.fetchedEntities.drupal_user, function (inner, user) {
-            if (user.field_drupal_uid == group_user.field_uid) {
-              name.push(user.field_username);
+        if (iris.fetched.users && iris.fetched.users.entities) {
+          jQuery.each(iris.fetchedEntities.user, function (inner, user) {
+            if (parseInt(user.field_external_id) === group_user.field_uid) {
+              name.push(user.username);
             }
           });
         }
@@ -198,9 +184,9 @@ Drupal.theme.prototype.GroupListItem = function (group, $scope) {
 };
 
 Drupal.theme.prototype.listMembersDisplay = function(member, $scope) {
-  for (var i = 0; i < iris.fetched.drupal_user.entities.length; i++) {
-    if (iris.fetched.drupal_user.entities[i].field_drupal_uid == member.field_uid) {
-      return iris.fetched.drupal_user.entities[i].field_username;
+  for (var i = 0; i < iris.fetched.users.entities.length; i++) {
+    if (iris.fetched.users.entities[i].field_external_id == member.field_uid) {
+      return iris.fetched.users.entities[i].username;
     }
   } 
 }
@@ -218,14 +204,14 @@ Drupal.theme.prototype.UserSearchItem = function (user, $scope) {
   } else {
     html += '  <span class="image-container ' + onlineclasses + '"><img src="' + Drupal.theme.prototype.GenericUserImage() + '"></span>';
   }
-  html += '<span class="name">' + user.field_username + '</span>';
+  html += '<span class="name">' + user.username + '</span>';
   if (iris.currentGroup && iris.fetchedEntities.group[iris.currentGroup].entityAuthor == iris.credentials.userid) {
     //Check if user isn't already in group
 
     var alreadyin = false;
     jQuery.each(iris.fetchedEntities.group[iris.currentGroup].field_users, function (index, element) {
 
-      if (element.field_uid === user.field_drupal_uid) {
+      if (element.field_uid === user.field_external_id) {
 
         alreadyin = true;
 

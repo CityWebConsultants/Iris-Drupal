@@ -19,7 +19,7 @@ function iris_entity_createEntity($entityType, $entityPropertiesArray, $credenti
     'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
   );
   
-  $result = drupal_http_request(variable_get("iris_server_address") . "/entity/create/".$entityType, $options);
+  $result = drupal_http_request(variable_get("iris_server_address") . "/entity/create/" . $entityType, $options);
   
   watchdog("iris", "Iris " . $entityType . ": " . $result->data);
       

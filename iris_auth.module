@@ -133,7 +133,7 @@ function iris_auth_uid_to_creds($uid){
     $options = array(
       'method' => 'POST',
       'data' => drupal_http_build_query($data),
-      'timeout' => 15,
+      'timeout' => 30,
       'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
     );
 
@@ -163,12 +163,10 @@ function iris_auth_user_login(){
   user_cookie_delete('iris_server');
   user_cookie_delete('iris_userid');
   user_cookie_delete('iris_token');
-  user_cookie_delete('iris_drupal_uid');
 
   user_cookie_save(array('iris_server' => variable_get("iris_server_address")));
   user_cookie_save(array('iris_userid' => $user_creds['userid']));
   user_cookie_save(array('iris_token' => $user_creds['token']));
-  user_cookie_save(array('iris_drupal_uid' => $user->uid));
   
 }
 
@@ -176,7 +174,6 @@ function iris_auth_user_logout(){
   
     user_cookie_delete('iris_userid');
     user_cookie_delete('iris_token');
-    user_cookie_delete('iris_drupal_uid');
   
     global $user;
     
@@ -186,7 +183,7 @@ function iris_auth_user_logout(){
     
     $data = array(
     'credentials' => json_encode($admin_creds),
-    'userid' => json_encode(variable_get('iris_userid_prefix', "").(string)$user->uid)
+    'userid' => json_encode(variable_get('iris_userid_prefix', "") . (string)$user->uid)
     );
     
     $options = array(

@@ -3,6 +3,7 @@
   $(document).ready(function () {
 
     iris.unread = 0;
+    iris.online = {};
     
     iris.initialise = function () {
       

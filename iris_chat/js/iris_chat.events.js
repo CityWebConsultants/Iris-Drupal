@@ -4,14 +4,91 @@
 
     // View a group's messages
 
+    function intersection_destructive(a, b) {
+      var result = new Array();
+      while (a.length > 0 && b.length > 0) {
+        if (a[0] < b[0]) {
+          a.shift();
+        } else if (a[0] > b[0]) {
+          b.shift();
+        } else /* they're equal */ {
+          result.push(a.shift());
+          b.shift();
+        }
+      }
+
+      return result;
+    }
+
+    Array.prototype.remove = function () {
+      var what, a = arguments,
+        L = a.length,
+        ax;
+      while (L && this.length) {
+        what = a[--L];
+        while ((ax = this.indexOf(what)) !== -1) {
+          this.splice(ax, 1);
+        }
+      }
+      return this;
+    };
+
+    if (window.io && iris.server) {
+
+      iris.chatReciever = io(iris.server);
+
+      iris.chatReciever.on('userConnect', function (uid) {
+
+        if (uid !== iris.credentials.userid) {
+          iris.updateGroupOnline(parseInt(uid), 'online');
+          iris.entityListUpdate.detail = {
+            entities: {}
+          };
+          document.dispatchEvent(iris.entityListUpdate);
+        }
+
+      });
+
+      iris.chatReciever.on('userDisconnect', function (uid) {
+
+        if (uid !== iris.credentials.userid) {
+          iris.updateGroupOnline(parseInt(uid), 'offline');
+
+          iris.entityListUpdate.detail = {
+            entities: {}
+          };
+          document.dispatchEvent(iris.entityListUpdate);
+        }
+      });
+    }
+
     document.addEventListener('entityListUpdate', function (e) {
 
       if (e.detail.entities.message) {
-        $('.message-window ul')[0].scrollTop = $('.message-window ul')[0].scrollHeight;
+        if ($('.message-window ul')[0]) {
+          $('.message-window ul')[0].scrollTop = $('.message-window ul')[0].scrollHeight;
+        }
       } else if (e.detail.entities.group) {
         e.detail.entities.group.forEach(function (group, index) {
           var current = iris.unread;
           iris.unread += group.unread;
+
+          var groupUsers = iris.getGroupUserIds(iris.fetchedEntities.group[group.eid].field_users);
+          var onlineGroupUsersArray = intersection_destructive(groupUsers, Object.keys(iris.online));
+          onlineGroupUsersArray.remove(parseInt(iris.credentials.userid));
+
+          // We want to convert to array to an object to better find and remove elements.
+          var onlineGroupUsers = {};
+          onlineGroupUsersArray.forEach(function (value) {
+            onlineGroupUsers[value] = true;
+          });
+
+          if (onlineGroupUsersArray.length > 0) {
+            iris.fetchedEntities.group[group.eid].online = onlineGroupUsers;
+          } else if (iris.fetchedEntities.group[group.eid].online) {
+            delete iris.fetchedEntities.group[group.eid].online;
+          }
+
 
           if (current === 0 && iris.unread > 0) {
 
@@ -27,16 +104,59 @@
 
           }
         });
+      } else if (e.detail.entities.user) {
+        e.detail.entities.user.forEach(function (user) {
+          if (user.field_external_id !== parseInt(iris.credentials.userid)) {
+            if (e.detail.event === 'delete') {
+              delete iris.online[user.field_external_id];
+            } else if (user.online === true) {
+              iris.updateGroupOnline(user.field_external_id, 'online');
+
+            } else if (iris.online[user.field_external_id]) {
+              iris.updateGroupOnline(user.field_external_id);
+            }
+          }
+        });
       }
 
 
     }, false);
 
 
+    iris.updateGroupOnline = function (uid, status) {
+
+      if (status == 'online') {
+        iris.online[uid] = true;
+        if (iris.fetchedEntities.group) {
+          iris.fetched.groups.entities.forEach(function (group) {
+            if (iris.getGroupUserIds(group.field_users).indexOf(uid) >= 0) {
+
+              if (!iris.fetchedEntities.group[group.eid].online) {
+                iris.fetchedEntities.group[group.eid].online = {};
+              }
+              iris.fetchedEntities.group[group.eid].online[uid] = true;
+            }
+          });
+        }
+      } else if (status == 'offline') {
+        delete iris.online[uid];
+        if (iris.fetchedEntities.group) {
+          iris.fetched.groups.entities.forEach(function (group) {
+            if (iris.getGroupUserIds(group.field_users).indexOf(uid) >= 0) {
+              if (iris.fetchedEntities.group[group.eid].online && iris.fetchedEntities.group[group.eid].online[uid]) {
+                delete iris.fetchedEntities.group[group.eid].online[uid];
+              }
+            }
+          });
+        }
+      }
+    }
+
     $("body").on("click", "#grouplist .group", function (e) {
 
       var groupid = jQuery(this).data("group");
 
+      $.get(iris.server + '/read-group/' + groupid + '/' + iris.credentials.userid);
       iris.currentGroup = groupid;
       iris.setActiveGroup(groupid, false);
       iris.fetchEntities("messages", {
@@ -90,10 +210,10 @@
 
       if (value.length) {
 
-        iris.fetchEntities("drupal_user", {
-          entities: ["drupal_user"],
+        iris.fetchEntities("users", {
+          entities: ["user"],
           queries: [{
-            "field": "field_username",
+            "field": "username",
             "operator": "contains",
             "value": $("#chat-search-field").val()
             }]
@@ -102,11 +222,11 @@
 
       } else {
 
-        iris.fetchEntities("drupal_user", {
+        iris.fetchEntities("users", {
 
-          entities: ["drupal_user"],
+          entities: ["user"],
           queries: [{
-            "field": "field_username",
+            "field": "username",
             "operator": "is",
             "value": "empty"
                     }]
