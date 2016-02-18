@@ -1,72 +1,83 @@
 <?php
 
-function iris_entity_createEntity($entityType, $entityPropertiesArray, $credentials){
-    
-   $data = array(
+/**
+ * @file
+ * Perform Iris entity opperations.
+ */
+
+/**
+ * Create new Iris entity.
+ */
+function iris_entity_createEntity($entityType, $entityPropertiesArray, $credentials) {
+
+  $data = array(
     'credentials' => json_encode($credentials),
-    );
-  
-  foreach($entityPropertiesArray as $key => $value){
-  
+  );
+
+  foreach ($entityPropertiesArray as $key => $value) {
+
     $data[$key] = json_encode($value);
-    
+
   }
-  
+
   $options = array(
     'method' => 'POST',
     'data' => drupal_http_build_query($data),
     'timeout' => 15,
     'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
   );
-  
+
   $result = drupal_http_request(variable_get("iris_server_address") . "/entity/create/" . $entityType, $options);
-  
+
   watchdog("iris", "Iris " . $entityType . ": " . $result->data);
-      
+
 }
 
-function iris_entity_fetchEntity($entityType, $queryList, $credentials){
-    
-    
+/**
+ * Fetch an Iris entity.
+ */
+function iris_entity_fetchEntity($entityType, $queryList, $credentials) {
+
   $query = array(
-    "entities" => array($entityType), 
+    "entities" => array($entityType),
     "queries" => array()
   );
-  
-    $query["queries"][] = array(
+
+  $query["queries"][] = array(
+    "field" => $queryList[0],
+    "operator" => $queryList[1],
+    "value" => $queryList[2]
+  );
+
+  $request = array(
+    'credentials' => json_encode($credentials),
+    "entities" => json_encode(array($entityType)),
+    "queries" => json_encode(array(array(
       "field" => $queryList[0],
       "operator" => $queryList[1],
       "value" => $queryList[2]
-    );
+    )))
+  );
 
-   $request = array(
-    'credentials' => json_encode($credentials),
-     "entities" => json_encode(array($entityType)), 
-     "queries" => json_encode(array(array(
-       "field" => $queryList[0],
-       "operator" => $queryList[1],
-       "value" => $queryList[2]
-     )))
-    );
- 
   $options = array(
     'method' => 'GET',
     'data' => drupal_http_build_query($request),
     'timeout' => 15,
     'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
   );
-  
+
   $result = drupal_http_request(variable_get("iris_server_address") . "/fetch/", $options);
-  
+
   watchdog("iris", "Iris " . $entityType . ": " . $result->data);
-      
+
   return $result;
 }
 
-
-
+/**
+ * Implements hook_rules_action_info().
+ */
 function iris_entity_rules_action_info() {
-  
+
   $data = array(
     'credentials' => json_encode(iris_auth_server_authenticate()),
   );
@@ -79,132 +90,107 @@ function iris_entity_rules_action_info() {
   );
 
   $result = drupal_http_request(variable_get("iris_server_address") . "/api/entitySchema", $options);
-  
-  // Array to place rules actions in
-  
+
+  // Array to place rules actions in.
   $actions = array();
-    
-  if(!empty($result->data)){
-    
+
+  if (!empty($result->data)) {
+
     $data = json_decode($result->data);
-    
+
     $counter = 1;
-    
-    $skipFields = array("entityType","eid", "_id", "id");
-    
-    foreach($data as $key => $value){
-                  
-      // Holder for current action's fields
-      
+
+    $skipFields = array("entityType", "eid", "_id", "id");
+
+    foreach ($data as $key => $value) {
+
+      // Holder for current action's fields.
       $current = array(
-          'label' => t('Create a '.$key.' entity'), 
-          'group' => t('Iris'), 
-          'base' => "iris_entity_createEntity_rules",
-          'parameter' => array(),
-          'named parameter' => true,
-          'settings' => "hello",
+        'label' => t('Create a ' . $key . ' entity'),
+        'group' => t('Iris'),
+        'base' => "iris_entity_createEntity_rules",
+        'parameter' => array(),
+        'named parameter' => TRUE,
+        'settings' => "hello",
       );
-            
-      // Loop over fields and add them as a form item
-            
-      foreach($value as $fieldName => $fieldSettings){
-        
-        if(!isset($fieldSettings->readableType)){
-          
+
+      // Loop over fields and add them as a form item.
+      foreach ($value as $fieldName => $fieldSettings) {
+
+        if (!isset($fieldSettings->readableType)) {
           continue;
-          
         }
-                
-        if($fieldSettings->readableType === "String"){
-          
+
+        if ($fieldSettings->readableType === "String") {
           $type = "text";
-          
-        } else if ($fieldSettings->readableType === "[String]") {
-          
+        }
+        elseif ($fieldSettings->readableType === "[String]") {
           $type = "list<text>";
-          
-        } else if ($fieldSettings->readableType === "[Number]") {
-          
-          $type = "list<integer>";
-          
-        } else if ($fieldSettings->readableType === "Boolean") {
-          
-          $type = "text";
-          
-        } else {
-          
-          $type = "text";
-          
         }
-                
-        if(!in_array($fieldName, $skipFields)){ 
+        elseif ($fieldSettings->readableType === "[Number]") {
+          $type = "list<integer>";
+        }
+        elseif ($fieldSettings->readableType === "Boolean") {
+          $type = "text";
+        }
+        else {
+          $type = "text";
+        }
 
+        if (!in_array($fieldName, $skipFields)) {
           $current['parameter'][$fieldName] = array(
-                  'type' => $type,
-                  'label' => t($fieldName),
-                  );
-          
-          }
-        
+            'type' => $type,
+            'label' => t($fieldName),
+          );
+        }
       }
-      
+
       // Add field for user id for which to perform this action
-      
       $current['parameter']["userid"] = array(
-                  'type' => 'text',
-                  'label' => 'User id',
-                  'optional' => true,
-                  'description' => "Iris user id to use to perform this action.  Leave blank to use the Iris root account."
-                  );
-      
+        'type' => 'text',
+        'label' => 'User id',
+        'optional' => TRUE,
+        'description' => "Iris user id to use to perform this action.  Leave blank to use the Iris root account."
+      );
+
       // Add entityType field. This should be hidden but I can't work out how at present.
-      
       $current['parameter']["entityType"] = array(
-                  'type' => 'text',
-                  'label' => 'entity type',
-                  'description' => "Don't edit this field",
-                  'default value' => $key
-                  );
-      
-                 
-      $actions['create_iris_entity_'.$key] = $current;
-    
+        'type' => 'text',
+        'label' => 'entity type',
+        'description' => "Don't edit this field",
+        'default value' => $key
+      );
+
+      $actions['create_iris_entity_' . $key] = $current;
     }
-
-  
   }
-    
   return $actions;
-
 }
 
-function iris_entity_createEntity_rules($settings){
+/**
+ * Rules action to create a new Iris entity.
+ */
+function iris_entity_createEntity_rules($settings) {
 
   $entityType = $settings['entityType'];
   $user = $settings["userid"];
-  
+
   unset($settings['userid']);
   unset($settings['entityType']);
-  
+
   unset($settings["settings"]);
   unset($settings["state"]);
-  
-  // Grab credentials object for user
-  
-  // First check if root
 
+  // Grab credentials object for user
+  // First check if root
   $creds = array();
-  
-  if(!isset($user)){
-    
+
+  if (!isset($user)) {
     $creds = iris_auth_server_authenticate();
-    
-  } else {
-    
-    $creds = iris_auth_uid_to_creds($user);
-    
   }
-  
+  else {
+    $creds = iris_auth_uid_to_creds($user);
+  }
+
   iris_entity_createEntity($entityType, $settings, $creds);
-    
 }

@@ -1,8 +1,13 @@
 <?php
 
-// Forms for Iris settings
+/**
+ * @file
+ * Perform authentication with Iris.
+ */
 
-//Administration
+/**
+ * Iris Auth settings page form.
+ */
 function iris_auth_admin() {
   $form = array();
   $form['iris_server_address'] = array(
@@ -45,6 +50,9 @@ function iris_auth_admin() {
   return system_settings_form($form);
 }
 
+/**
+ * Implements hook_menu().
+ */
 function iris_auth_menu() {
   $items = array();
   $items['admin/config/iris/settings'] = array(
@@ -54,33 +62,32 @@ function iris_auth_menu() {
     'page arguments' => array('iris_auth_admin'),
     'access arguments' => array('administer chat settings'),
     'type' => MENU_NORMAL_ITEM,
-   );
+  );
   $items['iris/reauthenticate'] = array(
     'title' => 'Iris reauthenticate',
     'page callback' => 'iris_auth_reauthenticate_json',
     'access callback' => TRUE,
     'type' => MENU_NORMAL_ITEM,
-   );
+  );
   return $items;
 }
 
+/**
+ * JSON callback to return new authentication credentials.
+ */
 function iris_auth_reauthenticate_json() {
-   
+
   global $user;
   $returns = array();
-  
+
   if ($user->uid) {
     $result = iris_auth_uid_to_creds($user->uid);
 
     if ($result) {
-      
-        //$returns['peerserver'] = variable_get("hub_chat_peerserver");
-        //$returns['peerport'] = variable_get("hub_chat_peerport");
-        $returns['server'] = variable_get("iris_server_address");
-        $returns['token'] = $result['token'];
-        $returns['userid'] = $result['userid'];
-        $returns['success'] = TRUE;
-
+      $returns['server'] = variable_get("iris_server_address");
+      $returns['token'] = $result['token'];
+      $returns['userid'] = $result['userid'];
+      $returns['success'] = TRUE;
     }
     else {
       $returns['success'] = FALSE;
@@ -92,39 +99,42 @@ function iris_auth_reauthenticate_json() {
   }
 }
 
-// Send an HTTP request with the username and password of an Iris user that has Make Access Token Permissions, get back admin credentials object
-
+/**
+ * Send an HTTP request with the username and password of an Iris user that
+ * has Make Access Token Permissions, get back admin credentials object
+ */
 function iris_auth_server_authenticate() {
-  
-  
+
   $data = array(
     'username' => variable_get("iris_admin_username"),
     'password' => variable_get("iris_admin_password")
   );
-  
+
   //Send the admin authentication request to the Iris server
-  
   $options = array(
     'method' => 'POST',
     'data' => drupal_http_build_query($data),
     'timeout' => 15,
     'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
   );
-  
-    //Get a request back, validate it and set two cookies on the client to make JavaScript communication simpler.
-  
+
+  // Get a request back, validate it and set two cookies on the client to make
+  // JavaScript communication simpler.
   $result = drupal_http_request(variable_get("iris_server_address") . "/api/login", $options);
-  
+
   return json_decode($result->data);
-  
+
 };
 
-function iris_auth_uid_to_creds($uid){
-  
+/**
+ * Get Iris credentials for a given user id.
+ */
+function iris_auth_uid_to_creds($uid) {
+
   $admin_creds = iris_auth_server_authenticate();
-  
-  if(isset($admin_creds) && $admin_creds->userid){
-      
+
+  if (isset($admin_creds) && $admin_creds->userid) {
+
     $data = array(
       'credentials' => json_encode($admin_creds),
       'userid' => json_encode(variable_get('iris_userid_prefix', "") . (string)$uid)
@@ -137,29 +147,30 @@ function iris_auth_uid_to_creds($uid){
       'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
     );
 
-      $result = drupal_http_request(variable_get("iris_server_address") . "/auth/maketoken", $options);
+    $result = drupal_http_request(variable_get("iris_server_address") . "/auth/maketoken", $options);
 
-      $token = json_decode($result->data)->response->id;
-    
-      return array(
-        "userid" => variable_get('iris_userid_prefix', "").(string)$uid,
-        "token" => $token
-      );
-        
+    $token = json_decode($result->data)->response->id;
+
+    return array(
+      "userid" => variable_get('iris_userid_prefix', "") . (string)$uid,
+      "token" => $token
+    );
   }
-  
 }
 
-function iris_auth_user_login(){
-  
+/**
+ * Implements hook_user_login().
+ */
+function iris_auth_user_login() {
+
   global $user;
-  
-  // Returns admin credentials
-  
+
+  // Returns admin credentials.
   $admin_creds = iris_auth_server_authenticate();
-    
+
+  // Returns the user credentials.
   $user_creds = iris_auth_uid_to_creds($user->uid);
-  
+
   user_cookie_delete('iris_server');
   user_cookie_delete('iris_userid');
   user_cookie_delete('iris_token');
@@ -167,25 +178,28 @@ function iris_auth_user_login(){
   user_cookie_save(array('iris_server' => variable_get("iris_server_address")));
   user_cookie_save(array('iris_userid' => $user_creds['userid']));
   user_cookie_save(array('iris_token' => $user_creds['token']));
-  
+
 }
 
-function iris_auth_user_logout(){
-  
-    user_cookie_delete('iris_userid');
-    user_cookie_delete('iris_token');
-  
-    global $user;
-    
+/**
+ * Implements hook_user_logout().
+ */
+function iris_auth_user_logout() {
+
+  user_cookie_delete('iris_userid');
+  user_cookie_delete('iris_token');
+
+  global $user;
+
   $admin_creds = iris_auth_server_authenticate();
-    
-  if(isset($admin_creds) && $admin_creds->userid){
-    
+
+  if (isset($admin_creds) && $admin_creds->userid) {
+
     $data = array(
-    'credentials' => json_encode($admin_creds),
-    'userid' => json_encode(variable_get('iris_userid_prefix', "") . (string)$user->uid)
+      'credentials' => json_encode($admin_creds),
+      'userid' => json_encode(variable_get('iris_userid_prefix', "") . (string)$user->uid)
     );
-    
+
     $options = array(
       'method' => 'POST',
       'data' => drupal_http_build_query($data),
@@ -194,33 +208,27 @@ function iris_auth_user_logout(){
     );
 
     $result = drupal_http_request(variable_get("iris_server_address") . "/auth/clearauth", $options);
-    
   }
-  
 }
 
-function iris_auth_init(){
-  
+/**
+ * Implements hook_init().
+ */
+function iris_auth_init() {
+
   global $base_path;
   global $user;
-  
+
   user_cookie_save(array('iris_server' => variable_get("iris_server_address")));
-  
+
   if ($user->uid === 0) {
-    
     user_cookie_delete('iris_userid');
     user_cookie_delete('iris_token');
-
   }
-  
+
   // Add socket.io and core client side Iris js
-  
   $module_path = drupal_get_path("module", "iris_auth");
-
-  drupal_add_js(variable_get("iris_server_address").'/socket.io/socket.io.js', 'external');
+  drupal_add_js(variable_get("iris_server_address") . '/socket.io/socket.io.js', 'external');
   drupal_add_library('system', 'jquery.cookie');
-  drupal_add_js($base_path . $module_path.'/js/iris_pair.js', 'external');
-
+  drupal_add_js($base_path . $module_path . '/js/iris_pair.js', 'external');
 }
-
-?>

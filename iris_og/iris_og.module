@@ -18,15 +18,17 @@ function iris_og_node_update($node) {
   }
 }
 
+/**
+ * Update or edit groups.
+ */
 function iris_og_sync_groups($node, $hook) {
-     
-    
+
   $members = og_get_group_members_properties($node, array(), 'members', 'node');
-  
+
   $iris_members = array();
   foreach ($members as $member) {
     $iris_members[] = array(
-        "field_uid" => $member,
+      "field_uid" => $member,
     );
   }
 
@@ -38,17 +40,13 @@ function iris_og_sync_groups($node, $hook) {
     'field_users' => json_encode($iris_members)
   );
 
-  if(!empty($node->field_group_logo['und'])){
-
-    $picture = $node->field_group_logo['und'][0][fid];
+  /*if (!empty($node->field_group_logo["und"])) {
+    $picture = $node->field_group_logo["und"][0][fid];
     $picture = file_load($picture);
     $picture = $picture->uri;
     $data['field_avatar'] = image_style_url('50x50_avatar', $picture);
+  }*/
 
-  }
-
-
-  
   $options = array(
     'method' => 'POST',
     'data' => drupal_http_build_query($data),
@@ -60,18 +58,22 @@ function iris_og_sync_groups($node, $hook) {
     $result = drupal_http_request(variable_get("iris_server_address") . "/entity/create/group", $options);
   }
   elseif ($hook == 'update') {
-      $query = array(
-        array(
-          'field_drupal_nid',
-          'IS', 
-          $node->nid
-        )
-      );
+    $query = array(
+      array(
+        'field_drupal_nid',
+        'IS', 
+        $node->nid
+      )
+    );
     $iris_entity = iris_entity_fetchEntity('group', $query, $admin_creds);
     $decoded = json_decode($iris_entity->data);
-    $result = drupal_http_request(variable_get("iris_server_address") . "/entity/edit/group/" . $decoded->response[0]->eid, $options);
+    if (is_object($decoded)) {
+      $result = drupal_http_request(variable_get("iris_server_address") . "/entity/edit/group/" . $decoded->response[0]->eid, $options);
+    }
+    else {
+      $result = drupal_http_request(variable_get("iris_server_address") . "/entity/create/group", $options);
+    }
   }
-  watchdog("iris", "Iris group: " . $result->data);
 }
 
 /**
@@ -87,20 +89,6 @@ function iris_og_og_membership_insert(OgMembership $og_membership) {
     iris_og_update_membership($uid, $group_id, 'insert');
 
   }
-  /*elseif ($og_membership->entity_type == 'user' && $og_membership->state == 2) {
-    // User requests membership.
-    $managers = hub_chat_get_og_manager($og_membership->gid, $og_membership->group_type);
-
-    $requester = user_load($og_membership->etid);
-    $group = node_load($og_membership->gid);
-
-    hub_chat_send_system_message($managers, t('!user has requested to join !group',
-      array(
-        '!user' => l(hub_chat_make_user_name($requester), 'user/' . $requester->uid),
-        '!group' => l($group->title, 'node/' . $group->nid),
-      ))
-    );
-  }*/
 }
 
 /**
@@ -114,41 +102,41 @@ function iris_og_og_membership_delete(OgMembership $og_membership) {
     $group_id = $og_membership->gid;
     // Add user to group.
     iris_og_update_membership($uid, $group_id, 'delete');
-
   }
-    
 }
 
+/**
+ * Implements hook_og_update_membership().
+ */
 function iris_og_update_membership($uid, $group_id, $method) {
-    
+
   $admin_creds = iris_auth_server_authenticate();
-  
   $query = 
-        array(
-          'field_drupal_nid',
-          'IS', 
-          $group_id
-        );
-    $iris_entity = iris_entity_fetchEntity('group', $query, $admin_creds);
-    $iris_entity = json_decode($iris_entity->data)->response[0];
-    
-    $user_list = array();
-    foreach ($iris_entity->field_users as $iris_user) {
-      if ($method == 'delete' && $iris_user->field_uid == $uid) {
-        continue;
-      } 
-      $user_list[] = array('field_uid' => $iris_user->field_uid);    
-    }
-    if ($method == 'insert') {
-      $user_list[] = array('field_uid' => $uid);
-    }
-    
-    $data = array(
-      'credentials' => json_encode($admin_creds),
-      'field_users' => json_encode($user_list)
+    array(
+      'field_drupal_nid',
+      'IS', 
+      $group_id
     );
-  
-  
+  $iris_entity = iris_entity_fetchEntity('group', $query, $admin_creds);
+  $iris_entity = json_decode($iris_entity->data)->response[0];
+
+  $user_list = array();
+  foreach ($iris_entity->field_users as $iris_user) {
+    if ($method == 'delete' && $iris_user->field_uid == $uid) {
+      continue;
+    } 
+    $user_list[] = array('field_uid' => $iris_user->field_uid);    
+  }
+
+  if ($method == 'insert') {
+    $user_list[] = array('field_uid' => $uid);
+  }
+
+  $data = array(
+    'credentials' => json_encode($admin_creds),
+    'field_users' => json_encode($user_list)
+  );
+
   $options = array(
     'method' => 'POST',
     'data' => drupal_http_build_query($data),

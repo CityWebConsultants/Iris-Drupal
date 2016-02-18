@@ -1,3 +1,6 @@
+
+<!-- @file Perform authentication with Iris.-->
+
 <!-- Latest compiled and minified CSS -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
 
@@ -6,89 +9,6 @@
 
 <!-- Latest compiled and minified JavaScript -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
-
-<div ng-controller="iris-template" ng-iris-template="users">
-
-  {{users[1].field_username}}
-
-</div>
-
-
-<!--<div ng-controller="chat">
-
-  <h1>Chat!</h1>
-
-  <div ng-controller="iris-template" ng-iris-template="groups">
-
-    <div ng-repeat="group in groups">
-
-      <button data-group="{{group.eid}}" class="open-group">{{group.name}}</button>
-
-    </div>
-
-    <button id="newGroup">Create a group</button>
-
-    <div ng-controller="iris-template" ng-iris-template="messages">
-
-
-      <div ng-repeat="group in groups">
-
-        <div ng-if="$parent.$parent.$parent.currentGroup == group.eid">
-
-          <b>Members:</b> {{group.members}}
-
-        </div>
-
-      </div>
-
-      <div ng-if="messages">
-
-        <div>
-          <ul>
-            <li ng-repeat="message in messages">{{message.content}}</li>
-          </ul>
-        </div>
-        <form id="chat">
-          <input id="message" autocomplete="off" name="message">
-          <input type="submit" value="send" />
-        </form>
-
-        <h2>Add members search</h2>
-
-        <div ng-controller="iris-template" ng-iris-template="users">
-
-          <input id="user" />
-
-          <ul>
-
-            <li ng-repeat="user in users" ng-if="user.eid != credentials.userid">
-
-              <button class="addToGroup" data-userid={{user.eid}}>{{user.username}}</button>
-
-            </li>
-
-          </ul>
-
-        </div>
-
-      </div>
-    </div>
-
-  </div>
-</div>-->
-
-
-<!--<div ng-controller="chat">
-   <div ng-controller="iris-template" ng-iris-template="groups">
-
-    <div ng-repeat="group in groups">
-
-      <button data-group="{{group.eid}}" class="open-group">{{group.name}}</button>
-
-    </div>
-  </div>
-</div>-->
-
 
 <div ng-controller="chat" id="outer-chat-window">
   <section class="chat-window" id="chat">
@@ -100,8 +20,8 @@
     <section>
       <div id="lookup-panel">
         <div id='lookup-header'>
-          <h3 class="lookup-title recent active"><?php print l('Recent','javascript:void(0)',array('fragment' => '','external'=>true)); ?></h3>
-          <h3 class="lookup-title search"><?php print l('Search','javascript:void(0)',array('fragment' => '','external'=>true)); ?></h3>
+          <h3 class="lookup-title recent active"><?php print l(t('Recent'),'javascript:void(0)',array('fragment' => '','external'=>true)); ?></h3>
+          <h3 class="lookup-title search"><?php print l(t('Search'),'javascript:void(0)',array('fragment' => '','external'=>true)); ?></h3>
         </div>
         <div id="chat-search-pane" class="lookup-col-container">
           <form id="chat-search">
@@ -112,12 +32,11 @@
               <input id="chat-search-field" />
 
               <ul>
-                <!--id="chat-search-results"-->
-
+                  
                 <li data-userid="{{user.field_external_id}}" ng-bind-html="userSearchItem(user)" class="user" ng-repeat="user in users" ng-if="user.field_external_id != credentials.userid"></li>
 
               </ul>
-              <!--<div ng-include="'/<?php print drupal_get_path('module', 'iris_chat');?>/templates/user-search.html'"></div>-->
+            
             </div>
           </form>
 
@@ -189,14 +108,8 @@
             </div>
 
           </div>
-          <!--<form class='submit-message-from'>
-        <input class='message-send' type='submit' value='send' />
-        <div class='submit-message-box'>
-          <span id="typing"></span>
-          <input class='message-textfield' id='messageinput' autocomplete='off' />
-        </div>
-      </form>-->
 
+          <!-- The below buttons have yet to be implemented -->
           <ul class='group-actions'>
             <li class='group-action group-action-in-bar group-action-add-user' style="display:none;">
               <a><span class='glyphicon glyphicon-plus' aria-hidden='true'></span><?php print t('Add user'); ?></a>

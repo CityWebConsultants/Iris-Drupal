@@ -272,7 +272,7 @@
 
       if (iris.userExistsInGroup(iris.fetchedEntities.group[iris.currentGroup], selected_uid)) {
 
-        alert("User already exists in this group.");
+        alert(Drupal.t("User already exists in this group."));
         return false;
 
       } else {
